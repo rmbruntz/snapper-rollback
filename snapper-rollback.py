@@ -86,7 +86,7 @@ def mount_subvol_id5(target, source=None, dry_run=False):
             raise OSError("unable to mount {}".format(target))
 
 
-def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, dry_run=False):
+def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, set_default_subvol, dry_run=False):
     """
     Rename linux root subvolume, then create a snapshot of the subvolume to
     the old linux root location
@@ -103,7 +103,8 @@ def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, dry_run
         else:
             os.rename(subvol_main, subvol_main_newname)
             btrfsutil.create_snapshot(subvol_rollback_src, subvol_main)
-            btrfsutil.set_default_subvolume(subvol_main)
+            if set_default_subvol:
+                btrfsutil.set_default_subvolume(subvol_main)
         LOG.info(
             "{}Rollback to {} complete. Reboot to finish".format(
                 "[DRY-RUN MODE] " if dry_run else "", subvol_rollback_src
@@ -139,6 +140,11 @@ def main():
     except configparser.NoOptionError as e:
         dev = None
 
+    try:
+        set_default_subvol = config.getboolean("root", "set_default_subvol")
+    except configparser.NoOptionError:
+        set_default_subvol = True
+
     confirm_typed_value = "CONFIRM"
     try:
         confirmation = input(
@@ -159,6 +165,7 @@ def main():
             subvol_main_newname,
             subvol_rollback_src,
             dev,
+            set_default_subvol,
             dry_run=args.dry_run,
         )
     except PermissionError as e:
