@@ -94,6 +94,24 @@ def mount_subvol_id5(target, source=None, dry_run=False):
             raise OSError("unable to mount {}".format(target))
 
 
+def unmount_subvol_id5(target, dry_run=False):
+    """
+    Unmount the subvolume with ID 5
+    """
+    if not os.path.ismount(target):
+        LOG.warning("Not mounted: {}".format(target))
+        return
+
+    shellcmd = "umount {}".format(target)
+    if dry_run:
+        LOG.info(shellcmd)
+        ret = 0
+    else:
+        ret = os.system(shellcmd)
+    if ret != 0:
+        raise OSError("unable to unmount {}".format(target))
+
+
 def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, set_default_subvol, dry_run=False):
     """
     Rename linux root subvolume, then create a snapshot of the subvolume to
@@ -182,6 +200,8 @@ def main():
             set_default_subvol,
             dry_run=args.dry_run,
         )
+        if config.getboolean(section, "unmount_btrfs_root", fallback=False):
+            unmount_subvol_id5(mountpoint, dry_run=args.dry_run)
     except PermissionError as e:
         LOG.fatal("Permission denied: {}".format(e))
         exit(1)
