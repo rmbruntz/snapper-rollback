@@ -99,7 +99,8 @@ def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, set_def
                     subvol_rollback_src, subvol_main
                 )
             )
-            LOG.info("btrfs subvolume set-default {}".format(subvol_main))
+            if set_default_subvol:
+                LOG.info("btrfs subvolume set-default {}".format(subvol_main))
         else:
             os.rename(subvol_main, subvol_main_newname)
             btrfsutil.create_snapshot(subvol_rollback_src, subvol_main)
