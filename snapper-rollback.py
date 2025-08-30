@@ -45,6 +45,14 @@ def parse_args():
         default="/etc/snapper-rollback.conf",
         help="configuration file to use (default: /etc/snapper-rollback.conf)",
     )
+
+    parser.add_argument(
+        "-s",
+        "--section",
+        type=str,
+        default="root",
+        help="configuration section to use (default: root)",
+    )
     args = parser.parse_args()
     return args
 
@@ -130,19 +138,24 @@ def rollback(subvol_main, subvol_main_newname, subvol_rollback_src, dev, set_def
 def main():
     args = parse_args()
     config = read_config(args.config)
+    section = args.section
 
-    mountpoint = pathlib.Path(config.get("root", "mountpoint"))
-    subvol_main = mountpoint / config.get("root", "subvol_main")
+    if not config.has_section(section):
+        LOG.fatal(f"Missing config section: {section}")
+        sys.exit(1)
+
+    mountpoint = pathlib.Path(config.get(section, "mountpoint"))
+    subvol_main = mountpoint / config.get(section, "subvol_main")
     subvol_rollback_src = (
-        mountpoint / config.get("root", "subvol_snapshots") / args.snap_id / "snapshot"
+        mountpoint / config.get(section, "subvol_snapshots") / args.snap_id / "snapshot"
     )
     try:
-        dev = config.get("root", "dev")
+        dev = config.get(section, "dev")
     except configparser.NoOptionError as e:
         dev = None
 
     try:
-        set_default_subvol = config.getboolean("root", "set_default_subvol")
+        set_default_subvol = config.getboolean(section, "set_default_subvol")
     except configparser.NoOptionError:
         set_default_subvol = True
 
