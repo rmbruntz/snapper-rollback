@@ -98,7 +98,7 @@ def unmount_subvol_id5(target, dry_run=False):
     """
     Unmount the subvolume with ID 5
     """
-    if not os.path.ismount(target):
+    if not os.path.ismount(target) and not dry_run:
         LOG.warning("Not mounted: {}".format(target))
         return
 
